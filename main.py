@@ -7,10 +7,12 @@ FIRST_USER_SYMBOL = "x"
 SECOND_USER_SYMBOL = "0"
 current_player = FIRST_USER_SYMBOL
 bg = "#FA8072" # Color of backgroud 
+counter_1 = 0 # Counter of wins
+counter_2 = 0 # Counter of wins 
+counter = 0 # Counter of turns
 
 # Root settings
 root = Tk()
-
 root.title("TicTactoe")
 root.geometry("800x700+10+100")
 root.config(bg=bg)
@@ -20,13 +22,16 @@ root.resizable(False, False)
 top_frame = Frame(bg=bg)
 game_frame = Frame()
 stat_frame = Frame(bg=bg)
+statistic_frame = Frame(bg=bg)
 
 # Frames.grid
 top_frame.grid(column=0, row=0, columnspan=2, sticky="w")
 game_frame.grid(column=0, row=2, sticky="w")
-stat_frame.grid(column=1, row=1, sticky="s")
+stat_frame.grid(column=1, row=1, sticky="ne")
+statistic_frame.grid(column=0, row=8, sticky="ne")
 
 def create_board():
+    global game_board
     # Destroy widgets
     name_player_1.grid_forget()
     name_player_2.grid_forget()
@@ -34,11 +39,10 @@ def create_board():
     entry_2.grid_forget()
     button_enter.grid_forget()
 
-    current_player == FIRST_USER_SYMBOL
-
+    current_player == FIRST_USER_SYMBOL # First turn - X
+    
     # Creating new board
     size = 3 # Size of the board
-    global game_board
 
     for elmnt in game_frame.grid_slaves():
         elmnt.grid_remove()
@@ -53,7 +57,7 @@ def create_board():
 
 def remove_board():
     global current_player 
-    # Board remove
+    # Board remove(with grid.forget)
     size = 3
     for row in range(size):
         for col in range(size):
@@ -72,24 +76,26 @@ def check_player_1():
 
 def check_player_2():
     global name_of_player_2
-    if len(entry_2.get()) == 0: 
+    if len(entry_2.get()) == 0: # If field name is empty
         name_of_player_2 = "0"
     else:    
         name_of_player_2 = entry_2.get().title() 
 
 def input_control(event):
-    global game_board, current_player, size, counter_1, counter_2
+    global game_board, current_player, size, counter, counter_1, counter_2
     current_widget = event.widget  # Field
     error.config(text="", fg="black")
     field_value = current_widget.get()  # Get a value from a field now
 
     if field_value != current_player:  # If it is not my turn
         current_widget.delete(0, END)
-        error.config(text="Incorrect symbol or player", fg="black") # Alert
+        error.config(text="Wrong symbol/player", fg="black") # Alert
         return
 
     current_widget.config(state="disabled")  # Blocking free fields
     
+
+
     if check_winner():  # True / False
 
         for row in game_board:
@@ -97,39 +103,47 @@ def input_control(event):
                 # Blocking free fields
                 e.config(state="disabled")  
 
-
-       
-
-        for c in range(len(game_board)):
-            for r in range(len(game_board)):
-                if game_board[r][c] != " ":
-                    print("Empty")
-
         if current_player == 'x':
             check_player_1()
-            messagebox.showinfo("Tic Tac Toe", f"Congratulation to player: {name_of_player_1}\nYou Win!") # Show a win
-     
-            
+            messagebox.showinfo("Tic Tac Toe", f"Congratulations for {name_of_player_1}\nyou've won!") # Show a win
+            counter_1 +=1
+            # Check for win/wins
+            if counter_1 == 1:
+                counter_lbl_1.config(text=f"{name_of_player_1} has {counter_1} win")
+            else:
+                counter_lbl_1.config(text=f"{name_of_player_1} has {counter_1} wins")
             
             
         if current_player == "0":
             check_player_2()
-            messagebox.showinfo("Tic Tac Toe", f"Congratulation to player: {name_of_player_2}\nYou Win!") # Show a win
+            messagebox.showinfo("Tic Tac Toe", f"Congratulations for {name_of_player_2}\nyou've won!") # Show a win
+            counter_2 +=1
+            if counter_2 == 1:
+                counter_lbl_2.config(text=f"{name_of_player_2} has {counter_2} win")
+            else:
+                counter_lbl_2.config(text=f"{name_of_player_2} has {counter_2} wins")
+      
  
-            
         remove_board()
         return
+        
     
     # Check turns
-    if current_player == FIRST_USER_SYMBOL:
-        current_player = SECOND_USER_SYMBOL
+    if current_player == FIRST_USER_SYMBOL: # If now x
+        current_player = SECOND_USER_SYMBOL # Current player - 0
         check_player_2()
         turn.config(text=f"Turn of {name_of_player_2}", fg="black") 
+        counter += 1 # Count of turns
     else:
-        current_player = FIRST_USER_SYMBOL
+        current_player = FIRST_USER_SYMBOL # Current_player - x
         check_player_1()
-        turn.config(text=f"Turn of {name_of_player_1}", fg="black") 
-        
+        turn.config(text=f"Turn of {name_of_player_1}", fg="black")
+        counter += 1
+
+    if counter == 9: #If game board is fully(Standoff)
+        messagebox.showinfo("Tic Tac Toe", 'Standoff')
+        remove_board()
+    
 def check_winner():
     
     for row in game_board:
@@ -162,10 +176,6 @@ def create_game():
 
     button_enter.grid(row=4, column=1, pady=5)
 
-def standoff():
-
-    pass
-
 # Entry and Labels
 name_label = Label(top_frame, text="TicTacToe", font=('Times New Roman', 25, 'bold'), bg=bg, fg='white')
 name_owner = Label(top_frame, text="©Grigoriy Sokolov", font=('Times New Roman', 20, "bold"), bg=bg, fg='white')
@@ -180,20 +190,26 @@ button_enter = Button(top_frame, text="Enter", font=('Times New Roman', 15), com
 clear_board = Button(top_frame, text="Clear board", font=('Times New Roman', 20), command=remove_board)
 
 # Errors and winner labels
-error = Label(stat_frame, bg=bg, font=('Comic Sans MS', 30, 'bold',))
-error.pack(anchor=W)
+error = Label(stat_frame, bg=bg, font=('Comic Sans MS', 25, 'bold',))
+error.pack(padx=10)
 winner = Label(stat_frame, bg=bg, font=('Comic Sans MS', 35, 'bold',))
 winner.pack(anchor=W)
-
+# Turn label
 turn = Label(stat_frame, bg=bg, font=('Comic Sans MS', 30, 'bold',))
-turn.pack()
-
+turn.pack(padx=100)
+# Statistic label
+counter_lbl_1 = Label(statistic_frame, bg=bg, font=('Comic Sans MS', 25, 'bold',)) 
+counter_lbl_2 = Label(statistic_frame ,bg=bg, font=('Comic Sans MS', 25, 'bold',)) 
+counter_lbl_1.grid()
+counter_lbl_2.grid()
 # Labels.grid
 name_label.grid(column=0, row=0)
 name_owner.grid(column=0, row=1, pady=5)
 # Buttons.grid
 new_game.grid(row=0, column=1, padx=10)
 clear_board.grid(row=0, column=4, padx=10)
+
+
 
 root.mainloop()
 
